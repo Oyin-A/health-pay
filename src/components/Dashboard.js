@@ -9,6 +9,8 @@ import { FiBell } from 'react-icons/fi';
 import { BiLoaderCircle } from 'react-icons/bi';
 import 'tippy.js/dist/tippy.css';
 import Tippy from '@tippyjs/react';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
 
 
 function Dashboard() {
