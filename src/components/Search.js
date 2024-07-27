@@ -148,7 +148,7 @@ function Search() {
         <div className="mt-8 bg-white rounded-lg shadow-lg p-6">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">Nearby Healthcare Providers</h2>
           <LoadScript
-            googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY"
+            googleMapsApiKey="AIzaSyBurBvVQtMRzrS1CvsoGm0hiGH6Doa28SM"
             onError={() => setMapError(true)}
             onLoad={() => setMapError(false)}
           >
