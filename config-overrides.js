@@ -1,16 +1,11 @@
-const webpack = require('webpack');
+const path = require('path');
 
-module.exports = function override(config, env) {
+module.exports = function override(config) {
   config.resolve.fallback = {
+    ...config.resolve.fallback,
     process: require.resolve('process/browser'),
-    path: require.resolve('path-browserify'),
+    os: require.resolve('os-browserify/browser'),
+    path: require.resolve('path-browserify')
   };
-
-  config.plugins = (config.plugins || []).concat([
-    new webpack.ProvidePlugin({
-      process: 'process/browser',
-    }),
-  ]);
-
   return config;
 };
