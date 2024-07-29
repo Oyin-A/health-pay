@@ -1,6 +1,5 @@
-// src/App.js
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes } from 'react-router-dom';
 import WelcomeScreen from './components/WelcomeScreen';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
@@ -29,7 +28,6 @@ import NearbyInsurance from './components/NearbyInsurance';
 import FAQ from './components/FAQ';
 import CustomerService from './components/CustomerService';
 import Appointments from './components/Appointments';
-
 
 function App() {
   const [user, setUser] = useState(null);
