@@ -7,7 +7,6 @@ import {
   AiOutlinePhone,
   AiOutlineQuestionCircle,
   AiOutlineDatabase,
-  AiOutlineGlobal,
   AiOutlineLogout,
   AiOutlineDelete,
   AiOutlineBell,
@@ -159,7 +158,7 @@ function Settings() {
           <h2 className="text-lg font-semibold mb-4">Help & Guides</h2>
           <div className="space-y-4">
             <button
-              className="w-full flex items-center justify-between p-4 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bggray-600 transition duration-150"
+              className="w-full flex items-center justify-between p-4 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150"
               onClick={() => navigate('/tutorials')}
             >
               <span>User Guides</span>
