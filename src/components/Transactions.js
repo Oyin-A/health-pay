@@ -9,15 +9,14 @@ import {
   AiOutlineSortDescending,
   AiOutlineArrowLeft,
   AiOutlinePieChart,
-  AiOutlineDollarCircle,
 } from 'react-icons/ai';
 import { Modal } from 'react-responsive-modal';
 import 'react-responsive-modal/styles.css';
 import { format, parseISO } from 'date-fns';
 import { motion } from 'framer-motion';
-import 'tailwindcss/tailwind.css';
 import { Pie } from 'react-chartjs-2';
 import Chart from 'chart.js/auto';
+import 'tippy.js/dist/tippy.css';
 
 const transactions = [
   { date: '2023-10-13', description: "Doctor's Visit", amount: 120.00, status: 'Completed' },
@@ -166,18 +165,15 @@ const Transactions = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 via-white to-purple-50 pb-16">
-      <header className="bg-black text-white py-4 px-6 shadow-md flex justify-between items-center relative">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-white hover:text-gray-400 transition-all duration-300"
-        >
+    <div className="min-h-screen flex flex-col bg-white text-gray-900 pb-12">
+      <header className="bg-gradient-to-r from-blue-500 to-purple-600 py-4 px-6 shadow-md flex justify-between items-center text-white">
+        <button onClick={() => navigate(-1)} className="flex items-center hover:underline">
           <AiOutlineArrowLeft className="h-6 w-6" />
         </button>
         <h1 className="text-xl font-bold mx-auto">Transactions</h1>
         <div className="cursor-pointer" onClick={() => navigate('/user-profile')}>
           {userDetails?.photoURL ? (
-            <img src={userDetails.photoURL} alt="User" className="w-10 h-10 rounded-full shadow-md" />
+            <img src={userDetails.photoURL} alt="User" className="w-10 h-10 rounded-full border-2 border-white" />
           ) : (
             <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-black font-bold">
               {userDetails?.displayName ? getInitials(userDetails.displayName) : 'U'}

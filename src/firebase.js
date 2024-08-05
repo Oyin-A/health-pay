@@ -6,13 +6,13 @@ import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDPxE6DAr41NxHxwtKx23nx4nHTcu4B3jA",
-  authDomain: "health-pay-f2292.firebaseapp.com",
-  projectId: "health-pay-f2292",
-  storageBucket: "health-pay-f2292.appspot.com",
-  messagingSenderId: "136953406340",
-  appId: "1:136953406340:web:0a32fcb2cce072a9d733d1",
-  measurementId: "G-C0CQCX7KPZ"
+  apiKey: "AIzaSyCpf3W60ejH2D5BHj1cosKSkcZnDvA-gqo",
+  authDomain: "health-test-bab2f.firebaseapp.com",
+  projectId: "health-test-bab2f",
+  storageBucket: "health-test-bab2f.appspot.com",
+  messagingSenderId: "855238988950",
+  appId: "1:855238988950:web:cbfcdf3a372c71778f1eb7",
+  measurementId: "G-BCF8DED0KV"
 };
 
 const app = initializeApp(firebaseConfig);

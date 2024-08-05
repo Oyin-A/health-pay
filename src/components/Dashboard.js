@@ -10,12 +10,18 @@ import { BiLoaderCircle } from 'react-icons/bi';
 import 'tippy.js/dist/tippy.css';
 import Tippy from '@tippyjs/react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import Notification from './Notification';
 
 function Dashboard() {
   const [isHelpChatOpen, setIsHelpChatOpen] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [notifications, setNotifications] = useState(3); // Example notification count
+  const [notifications, setNotifications] = useState([
+    'Your appointment is confirmed.',
+    'Your payment has been processed.',
+    'You have a new message from your doctor.',
+  ]); // Example notification messages
+  const [showNotifications, setShowNotifications] = useState(false); // State to control notification display
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,6 +54,10 @@ function Dashboard() {
       .join('');
   };
 
+  const handleBellClick = () => {
+    setShowNotifications(!showNotifications); // Toggle notification display
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen text-white">
@@ -62,11 +72,11 @@ function Dashboard() {
         <h1 className="text-2xl font-bold">Welcome to HealthPay!</h1>
         <div className="flex items-center space-x-4">
           <Tippy content="Notifications">
-            <div className="relative cursor-pointer" onClick={() => alert('Show notifications')}>
+            <div className="relative cursor-pointer" onClick={handleBellClick}>
               <FiBell className="text-2xl" />
-              {notifications > 0 && (
+              {notifications.length > 0 && (
                 <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                  {notifications}
+                  {notifications.length}
                 </span>
               )}
             </div>
@@ -85,6 +95,9 @@ function Dashboard() {
         </div>
       </header>
       <main className="flex-grow p-6 space-y-8">
+        {showNotifications && (
+          <Notification notifications={notifications} onClose={handleBellClick} />
+        )}
         <div className="bg-white bg-opacity-90 p-6 rounded-lg shadow-2xl text-black transform transition-transform hover:scale-105">
           <Carousel
             showArrows={true}

@@ -83,9 +83,9 @@ function AddNewClaim() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-100 to-gray-200 pb-12">
-      <header className="bg-gradient-to-r from-blue-600 to-purple-600 py-4 px-6 shadow-md flex justify-between items-center text-white">
-        <button onClick={() => navigate(-1)} className="text-white hover:text-gray-300 transition-all duration-300">
+    <div className="min-h-screen flex flex-col bg-white text-gray-900 pb-12">
+      <header className="bg-gradient-to-r from-blue-500 to-purple-600 py-4 px-6 shadow-md flex justify-between items-center text-white">
+        <button onClick={() => navigate(-1)} className="flex items-center hover:underline">
           <AiOutlineArrowLeft className="h-6 w-6" />
         </button>
         <h1 className="text-xl font-bold mx-auto">Add New Claim</h1>
@@ -102,7 +102,8 @@ function AddNewClaim() {
       <main className="flex-grow p-6 space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-            <label className="block text-gray-700 font-medium">Provider's Name
+            <label className="block text-gray-700 font-medium">
+              Provider's Name
               <Tippy content="Enter the full name of your healthcare provider">
                 <AiOutlineInfoCircle className="inline ml-2 text-gray-500" />
               </Tippy>
@@ -117,7 +118,8 @@ function AddNewClaim() {
             />
           </div>
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-            <label className="block text-gray-700 font-medium">Claim Amount
+            <label className="block text-gray-700 font-medium">
+              Claim Amount
               <Tippy content="Enter the amount you are claiming">
                 <AiOutlineInfoCircle className="inline ml-2 text-gray-500" />
               </Tippy>
@@ -132,7 +134,8 @@ function AddNewClaim() {
             />
           </div>
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-            <label className="block text-gray-700 font-medium">Date of Service
+            <label className="block text-gray-700 font-medium">
+              Date of Service
               <Tippy content="Select the date of the service">
                 <AiOutlineInfoCircle className="inline ml-2 text-gray-500" />
               </Tippy>
@@ -147,7 +150,8 @@ function AddNewClaim() {
             />
           </div>
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-            <label className="block text-gray-700 font-medium">Diagnosis Code
+            <label className="block text-gray-700 font-medium">
+              Diagnosis Code
               <Tippy content="Enter the diagnosis code provided by your healthcare provider">
                 <AiOutlineInfoCircle className="inline ml-2 text-gray-500" />
               </Tippy>
@@ -162,7 +166,8 @@ function AddNewClaim() {
             />
           </div>
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-            <label className="block text-gray-700 font-medium">Claim Type
+            <label className="block text-gray-700 font-medium">
+              Claim Type
               <Tippy content="Select the type of claim">
                 <AiOutlineInfoCircle className="inline ml-2 text-gray-500" />
               </Tippy>
@@ -180,7 +185,8 @@ function AddNewClaim() {
             </select>
           </div>
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-            <label className="block text-gray-700 font-medium">Upload Supporting Documents
+            <label className="block text-gray-700 font-medium">
+              Upload Supporting Documents
               <Tippy content="Upload receipts or medical reports supporting your claim">
                 <AiOutlineInfoCircle className="inline ml-2 text-gray-500" />
               </Tippy>

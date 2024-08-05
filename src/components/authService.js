@@ -1,7 +1,6 @@
-import { auth, googleProvider, firestore, storage } from '../firebase';
-import { signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
+import { auth, googleProvider, firestore } from '../firebase';
+import { signInWithPopup, signOut as firebaseSignOut, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // Sign in with Google
 export const signInWithGoogle = async () => {
@@ -10,21 +9,44 @@ export const signInWithGoogle = async () => {
     const user = result.user;
     console.log('Google Sign-In User:', user);
 
-    // Check if user exists in Firestore, if not, create a new record
     const userDoc = doc(firestore, 'users', user.uid);
-    const docSnapshot = await getDoc(userDoc);
-
-    if (!docSnapshot.exists()) {
-      await setDoc(userDoc, {
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        paymentMethods: []
-      });
-    }
+    await setDoc(userDoc, {
+      displayName: user.displayName,
+      email: user.email,
+      photoURL: user.photoURL,
+      paymentMethods: []
+    }, { merge: true });
     return user;
   } catch (error) {
     console.error('Error during Google sign-in:', error);
+  }
+};
+
+// Sign up with Email and Password
+export const signUpWithEmail = async (email, password, displayName) => {
+  try {
+    console.log('Attempting to create user with email:', email);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    console.log('User created:', userCredential.user);
+
+    await updateProfile(userCredential.user, { displayName });
+    console.log('Profile updated with display name:', displayName);
+
+    const user = userCredential.user;
+    const userDocRef = doc(firestore, 'users', user.uid);
+
+    await setDoc(userDocRef, {
+      displayName: user.displayName,
+      email: user.email,
+      photoURL: user.photoURL,
+      paymentMethods: []
+    });
+
+    console.log('User document created in Firestore:', user.uid);
+    return user;
+  } catch (error) {
+    console.error('Error during email sign-up:', error);
+    throw error;
   }
 };
 
@@ -46,6 +68,9 @@ export const getUserDetails = async () => {
   }
   const userDoc = doc(firestore, 'users', user.uid);
   const docSnapshot = await getDoc(userDoc);
+  if (!docSnapshot.exists()) {
+    throw new Error('User document not found');
+  }
   return docSnapshot.data();
 };
 

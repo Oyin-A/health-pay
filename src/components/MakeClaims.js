@@ -4,18 +4,8 @@ import Footer from './Footer';
 import HelpChatModal from './HelpChatModal';
 import { getUserDetails } from './authService';
 import {
-  FiArrowLeft,
-  FiUser,
-  FiPlusCircle,
-  FiCheckCircle,
-  FiXCircle,
-  FiInfo,
-  FiSearch,
-  FiChevronLeft,
-  FiChevronRight,
-  FiLoader,
-  FiSun,
-  FiMoon
+  FiArrowLeft, FiUser, FiPlusCircle, FiCheckCircle, FiXCircle,
+  FiInfo, FiSearch, FiChevronLeft, FiChevronRight, FiLoader
 } from 'react-icons/fi';
 import { MdPendingActions } from 'react-icons/md';
 import Tippy from '@tippyjs/react';
@@ -39,7 +29,6 @@ function MakeClaims() {
   const [filterStatus, setFilterStatus] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
-  const [darkMode, setDarkMode] = useState(false);
   const claimsPerPage = 6;
 
   useEffect(() => {
@@ -117,20 +106,14 @@ function MakeClaims() {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  const toggleDarkMode = () => setDarkMode(!darkMode);
-
   return (
-    <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-gray-900 text-gray-200' : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'} pb-12 relative transition-colors duration-500`}>
-      <header className="bg-black py-4 px-6 shadow-md flex justify-between items-center">
-        <button onClick={() => navigate(-1)} className="text-white flex items-center hover:underline">
+    <div className="min-h-screen flex flex-col bg-white text-gray-900 pb-12 relative transition-colors duration-500">
+      <header className="bg-gradient-to-r from-blue-500 to-purple-600 py-4 px-6 shadow-md flex justify-between items-center text-white">
+        <button onClick={() => navigate(-1)} className="flex items-center hover:underline">
           <FiArrowLeft className="h-6 w-6" />
-          
         </button>
         <h1 className="text-2xl font-bold">Claims</h1>
         <div className="flex items-center space-x-4">
-          <button onClick={toggleDarkMode} className="text-white transition-transform transform hover:scale-110">
-            {darkMode ? <FiSun className="h-6 w-6" /> : <FiMoon className="h-6 w-6" />}
-          </button>
           <div className="cursor-pointer" onClick={() => navigate('/user-profile')}>
             {userDetails?.photoURL ? (
               <img src={userDetails.photoURL} alt="User" className="w-10 h-10 rounded-full border-2 border-white" />
@@ -144,7 +127,7 @@ function MakeClaims() {
       </header>
       <main className="flex-grow p-6 space-y-8">
         <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-2 bg-white text-black py-2 px-4 rounded-md shadow-md">
+          <div className="flex items-center space-x-2 bg-gray-100 text-black py-2 px-4 rounded-md shadow-md">
             <FiSearch className="h-5 w-5 text-gray-500" />
             <input
               type="text"
@@ -157,7 +140,7 @@ function MakeClaims() {
           <select
             value={filterStatus}
             onChange={handleFilterChange}
-            className="bg-white text-black py-2 px-4 rounded-md shadow-md"
+            className="bg-gray-100 text-black py-2 px-4 rounded-md shadow-md"
           >
             <option value="">All Statuses</option>
             <option value="Pending">Pending</option>
@@ -193,7 +176,7 @@ function MakeClaims() {
             {currentClaims.map((claim) => (
               <div
                 key={claim.id}
-                className="bg-white p-6 rounded-lg shadow-lg text-black transform transition-transform hover:scale-105 relative overflow-hidden cursor-pointer hover:shadow-2xl"
+                className="bg-gray-100 p-6 rounded-lg shadow-lg text-black transform transition-transform hover:scale-105 relative overflow-hidden cursor-pointer hover:shadow-2xl"
                 onClick={() => openClaimDetails(claim)}
               >
                 <div
@@ -262,7 +245,7 @@ function MakeClaims() {
             <p><strong>Date Submitted:</strong> {selectedClaim.date}</p>
             <p><strong>Amount:</strong> {selectedClaim.amount}</p>
             <p><strong>Status:</strong> {selectedClaim.status}</p>
-            <p className="mt-4">Detailed information about the claim </p>
+            <p className="mt-4">Detailed information about the claim</p>
           </div>
         </div>
       )}

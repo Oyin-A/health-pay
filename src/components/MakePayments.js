@@ -3,96 +3,40 @@ import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
 import HelpChatModal from './HelpChatModal';
 import { getUserDetails } from './authService';
+import {
+  FiArrowLeft, FiUser, FiPlusCircle, FiInfo, FiLoader, FiTrash, FiBell, FiEdit,
+} from 'react-icons/fi';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCcVisa, faCcMastercard, faCcAmex, faCcDiscover } from '@fortawesome/free-brands-svg-icons';
+import {
+  faCcVisa, faCcMastercard, faCcAmex, faCcDiscover,
+} from '@fortawesome/free-brands-svg-icons';
+import {
+  faCreditCard, faLock,
+} from '@fortawesome/free-solid-svg-icons';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 import Modal from 'react-modal';
-import { faTrashAlt, faEdit, faUniversity, faSun, faMoon, faSpinner, faPlusCircle, faLock, faBell,faCreditCard } from '@fortawesome/free-solid-svg-icons';
-import { faSomeBrandIcon } from '@fortawesome/free-brands-svg-icons';
-import { faSomeRegularIcon } from '@fortawesome/free-regular-svg-icons';
-
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 Modal.setAppElement('#root');
-
-const SecuritySetting = ({ icon, color, title, description, buttonText, onClick }) => (
-  <div className="flex items-center justify-between bg-gray-100 p-4 rounded-md shadow-sm">
-    <div className="flex items-center">
-      <FontAwesomeIcon icon={icon} className={`w-8 h-8 mr-4 ${color}`} />
-      <div>
-        <p className="text-gray-800">{title}</p>
-        <p className="text-gray-500">{description}</p>
-      </div>
-    </div>
-    <button onClick={onClick} className="text-white bg-blue-500 py-1 px-3 rounded-md shadow-md hover:bg-blue-600">{buttonText}</button>
-  </div>
-);
-const getCardIcon = (cardType) => {
-    switch(cardType) {
-        case 'visa':
-            return <FontAwesomeIcon icon={faCcVisa} />;
-        case 'mastercard':
-            return <FontAwesomeIcon icon={faCcMastercard} />;
-        case 'amex':
-            return <FontAwesomeIcon icon={faCcAmex} />;
-        // Add more card types as needed
-        default:
-            return <FontAwesomeIcon icon={faCreditCard} />;
-    }
-};
-
-const TransactionItem = ({ transaction, onRemove }) => (
-  <div className="flex items-center justify-between bg-gray-100 p-4 rounded-md shadow-sm">
-    <div>
-      <p className="text-gray-800">{transaction.date}</p>
-      <p className="text-gray-500">{transaction.method}</p>
-    </div>
-    <p className="text-gray-800">{transaction.amount}</p>
-    <Tippy content="Remove">
-      <button className="text-red-500 hover:text-red-700" onClick={() => onRemove(transaction)}>
-        <FontAwesomeIcon icon={faTrashAlt} />
-      </button>
-    </Tippy>
-  </div>
-);
-
-const PaymentMethod = ({ method, onRemove }) => (
-  <div className="flex items-center justify-between bg-gray-100 p-4 rounded-md shadow-sm">
-    <div className="flex items-center">
-      <FontAwesomeIcon icon={getCardIcon(method)} className="w-8 h-8 mr-4" />
-      <div>
-        <p className="text-gray-800">{method.method}</p>
-        <p className="text-gray-500">Expires 12/23</p>
-      </div>
-    </div>
-    <div className="flex items-center space-x-2">
-      <button className="text-white bg-black py-1 px-3 rounded-md shadow-md">Default</button>
-      <Tippy content="Edit">
-        <button className="text-blue-500 hover:text-blue-700">
-          <FontAwesomeIcon icon={faEdit} />
-        </button>
-      </Tippy>
-      <Tippy content="Remove">
-        <button className="text-red-500 hover:text-red-700" onClick={() => onRemove(method)}>
-          <FontAwesomeIcon icon={faTrashAlt} />
-        </button>
-      </Tippy>
-    </div>
-  </div>
-);
 
 function MakePayments() {
   const navigate = useNavigate();
   const [isHelpChatOpen, setIsHelpChatOpen] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState([
+    { id: 1, date: '2023-07-20', method: 'Visa **** 1234', amount: '$200', status: 'Completed', transactionId: 'TXN12345' },
+    { id: 2, date: '2023-07-18', method: 'Mastercard **** 5678', amount: '$150', status: 'Pending', transactionId: 'TXN12346' },
+    { id: 3, date: '2023-07-15', method: 'Amex **** 9101', amount: '$300', status: 'Failed', transactionId: 'TXN12347' }
+  ]);
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [newPaymentMethod, setNewPaymentMethod] = useState('');
   const [filter, setFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,14 +56,13 @@ function MakePayments() {
 
   const openHelpChat = () => setIsHelpChatOpen(true);
   const closeHelpChat = () => setIsHelpChatOpen(false);
-  const toggleDarkMode = () => setDarkMode(!darkMode);
 
   const getInitials = useCallback((name) => {
     return name.split(' ').map(word => word[0]).join('');
   }, []);
 
   const addNotification = useCallback((message) => {
-    setNotifications((prev) => [...prev, message]);
+    setNotifications((prev) => [...prev, { message, timestamp: new Date() }]);
     setTimeout(() => {
       setNotifications((prev) => prev.slice(1));
     }, 3000);
@@ -141,42 +84,42 @@ function MakePayments() {
     // Implement the removal logic here
   };
 
+  const handleNewPaymentMethodChange = (e) => setNewPaymentMethod(e.target.value);
+
   const getCardIcon = (method) => {
     if (method.includes('Visa')) return faCcVisa;
     if (method.includes('Mastercard')) return faCcMastercard;
     if (method.includes('Amex')) return faCcAmex;
     if (method.includes('Discover')) return faCcDiscover;
-    return faUniversity;
+    return faCreditCard;
   };
 
-  const handleNewPaymentMethodChange = (e) => setNewPaymentMethod(e.target.value);
-
   const filteredTransactions = useMemo(() => {
-    return transactions.filter(transaction =>
+    const filtered = transactions.filter(transaction =>
       transaction.method.toLowerCase().includes(filter.toLowerCase())
     );
-  }, [transactions, filter]);
+    return filtered.sort((a, b) => {
+      if (sortOrder === 'asc') {
+        return new Date(a.date) - new Date(b.date);
+      }
+      return new Date(b.date) - new Date(a.date);
+    });
+  }, [transactions, filter, sortOrder]);
 
   return (
-    <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-gray-900 text-gray-200' : 'bg-gradient-to-r from-green-400 to-blue-500 text-white'} pb-12 relative transition-colors duration-500`}>
-      <header className="bg-black py-4 px-6 shadow-md flex justify-between items-center">
-        <button onClick={() => navigate(-1)} className="text-white flex items-center hover:underline">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span className="ml-2">Back</span>
+    <div className="min-h-screen flex flex-col bg-white text-gray-900 pb-12 relative transition-colors duration-500">
+      <header className="bg-gradient-to-r from-blue-500 to-purple-600 py-4 px-6 shadow-md flex justify-between items-center text-white">
+        <button onClick={() => navigate(-1)} className="flex items-center hover:underline">
+          <FiArrowLeft className="h-6 w-6" />
         </button>
         <h1 className="text-2xl font-bold">Make Payments</h1>
         <div className="flex items-center space-x-4">
-          <button onClick={toggleDarkMode} className="text-white transition-transform transform hover:scale-110">
-            {darkMode ? <FontAwesomeIcon icon={faSun} className="h-6 w-6" /> : <FontAwesomeIcon icon={faMoon} className="h-6 w-6" />}
-          </button>
           <div className="cursor-pointer" onClick={() => navigate('/user-profile')}>
             {userDetails?.photoURL ? (
               <img src={userDetails.photoURL} alt="User" className="w-10 h-10 rounded-full border-2 border-white" />
             ) : (
               <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-black font-bold">
-                {userDetails?.displayName ? getInitials(userDetails.displayName) : 'U'}
+                {userDetails?.displayName ? getInitials(userDetails.displayName) : <FiUser className="h-6 w-6" />}
               </div>
             )}
           </div>
@@ -184,95 +127,135 @@ function MakePayments() {
       </header>
       {isLoading ? (
         <div className="flex-grow flex justify-center items-center">
-          <FontAwesomeIcon icon={faSpinner} spin />
+          <Skeleton count={3} />
         </div>
       ) : (
         <main className="flex-grow p-6 space-y-6">
           <h2 className="text-xl font-semibold mb-4">Welcome, {userDetails?.displayName || 'User'}!</h2>
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-bold mb-4 text-black">Manage your payment methods</h2>
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-lg font-bold mb-4">Manage your payment methods</h2>
             <div className="space-y-4">
-              {filteredTransactions.map((method) => (
-                <PaymentMethod key={method.id} method={method} onRemove={handleRemovePaymentMethod} />
+              {transactions.map((method) => (
+                <div key={method.id} className="flex items-center justify-between bg-gray-100 p-4 rounded-md shadow-sm">
+                  <div className="flex items-center">
+                    <FontAwesomeIcon icon={getCardIcon(method.method)} className="w-8 h-8 text-blue-500 mr-4" />
+                    <div className="ml-4">
+                      <p className="text-gray-900 font-medium">{method.method}</p>
+                      <p className="text-gray-500">Expires 12/23</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Tippy content="Set as default payment method">
+                      <button className="text-white bg-black py-1 px-3 rounded-md shadow-md">Default</button>
+                    </Tippy>
+                    <Tippy content="Edit payment method">
+                      <button className="text-blue-500 hover:text-blue-700">
+                        <FiEdit className="h-5 w-5" />
+                      </button>
+                    </Tippy>
+                    <Tippy content="Remove payment method">
+                      <button className="text-red-500 hover:text-red-700" onClick={() => handleRemovePaymentMethod(method)}>
+                        <FiTrash className="h-5 w-5" />
+                      </button>
+                    </Tippy>
+                  </div>
+                </div>
               ))}
             </div>
             <div className="mt-6">
               <select
                 value={newPaymentMethod}
                 onChange={handleNewPaymentMethodChange}
-                className="w-full bg-gray-200 text-gray-900 py-2 px-4 rounded-md shadow-md"
+                className="w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-md shadow-md"
               >
                 <option value="" disabled>Select Payment Method</option>
-      <FontAwesomeIcon icon={faCcVisa} />
-      <FontAwesomeIcon icon={faCcMastercard} />
-      <FontAwesomeIcon icon={faCcAmex} />
-      <FontAwesomeIcon icon={faCcDiscover} />
-                  <FontAwesomeIcon icon={faTrashAlt} />
-            <FontAwesomeIcon icon={faEdit} />
-            <FontAwesomeIcon icon={faUniversity} />
-            <FontAwesomeIcon icon={faSun} />
-            <FontAwesomeIcon icon={faMoon} />
-            <FontAwesomeIcon icon={faSpinner} />
-            <FontAwesomeIcon icon={faPlusCircle} />
-            <FontAwesomeIcon icon={faLock} />
-            <FontAwesomeIcon icon={faBell} />
-
+                <option value="visa">Visa</option>
+                <option value="mastercard">Mastercard</option>
+                <option value="amex">American Express</option>
+                <option value="discover">Discover</option>
               </select>
               <button
                 onClick={handleAddPaymentMethod}
                 className="w-full bg-black text-white py-2 px-4 mt-4 rounded-md shadow-md transform transition-transform hover:scale-105 flex items-center justify-center"
               >
-                <FontAwesomeIcon icon={faPlusCircle} className="mr-2" />
+                <FiPlusCircle className="mr-2" />
                 Add New Payment Method
               </button>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-bold mb-4 text-black">Security Settings</h2>
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-lg font-bold mb-4">Security Settings</h2>
             <div className="space-y-4">
-              <SecuritySetting 
-                icon={faLock} 
-                color="text-yellow-600" 
-                title="Secure Payments Enabled" 
-                description="Extra security with two-factor authentication" 
-                buttonText="Disable" 
-                onClick={() => addNotification('Secure Payments Disabled')}
-              />
-              <SecuritySetting 
-                icon={faLock} 
-                color="text-red-600" 
-                title="Payment Notifications" 
-                description="Receive notifications for all payment actions" 
-                buttonText="Enable" 
-                onClick={() => addNotification('Payment Notifications Enabled')}
-              />
+              <div className="flex items-center justify-between bg-gray-100 p-4 rounded-md shadow-sm">
+                <div className="flex items-center">
+                  <FontAwesomeIcon icon={faLock} className="w-8 h-8 mr-4 text-yellow-600" />
+                  <div>
+                    <p className="text-gray-900">Secure Payments Enabled</p>
+                    <p className="text-gray-500">Extra security with two-factor authentication</p>
+                  </div>
+                </div>
+                <button onClick={() => addNotification('Secure Payments Disabled')} className="text-white bg-blue-500 py-1 px-3 rounded-md shadow-md hover:bg-blue-600">Disable</button>
+              </div>
+              <div className="flex items-center justify-between bg-gray-100 p-4 rounded-md shadow-sm">
+                <div className="flex items-center">
+                  <FiBell className="w-8 h-8 mr-4 text-red-600" />
+                  <div>
+                    <p className="text-gray-900">Payment Notifications</p>
+                    <p className="text-gray-500">Receive notifications for all payment actions</p>
+                  </div>
+                </div>
+                <button onClick={() => addNotification('Payment Notifications Enabled')} className="text-white bg-blue-500 py-1 px-3 rounded-md shadow-md hover:bg-blue-600">Enable</button>
+              </div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-bold mb-4 text-black">Payment History</h2>
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-lg font-bold mb-4">Payment History</h2>
             <div className="flex items-center mb-4">
               <input
                 type="text"
                 placeholder="Filter by payment method"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="flex-grow bg-gray-200 text-gray-900 py-2 px-4 rounded-md shadow-md"
+                className="flex-grow bg-gray-100 text-gray-900 py-2 px-4 rounded-md shadow-md"
               />
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="ml-4 text-white bg-blue-500 py-2 px-4 rounded-md shadow-md hover:bg-blue-600"
+              >
+                Sort by Date {sortOrder === 'asc' ? '▲' : '▼'}
+              </button>
             </div>
             <div className="space-y-4">
               {filteredTransactions.map((transaction) => (
-                <TransactionItem key={transaction.id} transaction={transaction} onRemove={handleRemovePaymentMethod} />
+                <div key={transaction.id} className="flex items-center justify-between bg-gray-100 p-4 rounded-md shadow-sm">
+                  <div>
+                    <p className="text-gray-900">{transaction.date}</p>
+                    <p className="text-gray-500">{transaction.method}</p>
+                    <p className="text-gray-400">{transaction.transactionId} - {transaction.status}</p>
+                  </div>
+                  <p className="text-gray-900">{transaction.amount}</p>
+                  <Tippy content="Remove">
+                    <button className="text-red-500 hover:text-red-700" onClick={() => handleRemovePaymentMethod(transaction)}>
+                      <FiTrash className="h-5 w-5" />
+                    </button>
+                  </Tippy>
+                </div>
               ))}
+            </div>
+            <div className="mt-4 flex justify-between items-center">
+              <button className="text-white bg-blue-500 py-2 px-4 rounded-md shadow-md hover:bg-blue-600">Previous</button>
+              <button className="text-white bg-blue-500 py-2 px-4 rounded-md shadow-md hover:bg-blue-600">Next</button>
             </div>
           </div>
           {notifications.map((notification, index) => (
             <div key={index} className="fixed top-16 right-6 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg animate-bounce">
-              <FontAwesomeIcon icon={faBell} className="mr-2" /> {notification}
+              {notification.message}
+              <span className="text-sm ml-2">({notification.timestamp.toLocaleTimeString()})</span>
             </div>
           ))}
           <button
             onClick={openHelpChat}
-            className="fixed bottom-16 right-6 bg-red-500 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-3xl font-bold transform transition-transform hover:scale-110"
+            className="fixed bottom-16 right-6 bg-red-500 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-3xl font-bold transform transition-transform hover:scale-110 hover:bg-red-600"
           >
             ?
           </button>
@@ -291,7 +274,7 @@ function MakePayments() {
           <h2 className="text-xl font-bold mb-4">Remove Payment Method</h2>
           <p>Are you sure you want to remove {selectedPaymentMethod?.method}?</p>
           <div className="mt-6 flex justify-end space-x-4">
-            <button onClick={() => setIsModalOpen(false)} className="bg-gray-300 text-gray-700 py-2 px-4 rounded-md shadow-md hover:bg-gray-400">Cancel</button>
+            <button onClick={() => setIsModalOpen(false)} className="bg-gray-300 text-gray-900 py-2 px-4 rounded-md shadow-md hover:bg-gray-400">Cancel</button>
             <button onClick={confirmRemovePaymentMethod} className="bg-red-500 text-white py-2 px-4 rounded-md shadow-md hover:bg-red-600">Remove</button>
           </div>
         </div>

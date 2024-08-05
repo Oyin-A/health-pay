@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Footer from './Footer';
-import { BiLoaderCircle, BiSearch, BiMicrophone, BiFilter, BiSort } from 'react-icons/bi';
+import { BiLoaderCircle, BiSearch, BiMicrophone, BiFilter, BiSort, BiX } from 'react-icons/bi';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 import { AiOutlineArrowLeft } from 'react-icons/ai';
 import Modal from 'react-modal';
@@ -75,7 +75,7 @@ function Search() {
         <button onClick={() => navigate(-1)} className="text-white hover:text-gray-400 transition-all duration-300">
           <AiOutlineArrowLeft className="h-6 w-6" />
         </button>
-        <div className="relative w-full max-w-lg mx-auto">
+        <div className="relative w-full max-w-lg mx-auto flex items-center">
           <input
             type="text"
             placeholder="Search for healthcare providers, services, insurance plans..."
@@ -83,8 +83,9 @@ function Search() {
             value={searchTerm}
             onChange={handleSearchChange}
           />
-          <BiSearch className="absolute top-3 right-10 text-gray-400" />
-          <BiMicrophone className="absolute top-3 right-3 text-gray-400 cursor-pointer" onClick={handleVoiceSearch} />
+          <BiSearch className="absolute right-3 text-gray-400" />
+          <BiMicrophone className="absolute right-10 text-gray-400 cursor-pointer" onClick={handleVoiceSearch} />
+          {searchTerm && <BiX className="absolute right-16 text-gray-400 cursor-pointer" onClick={() => setSearchTerm('')} />}
         </div>
       </header>
       <main className="flex-grow px-6 py-8">
@@ -115,12 +116,11 @@ function Search() {
             </select>
           </div>
         </div>
-        {isLoading && (
+        {isLoading ? (
           <div className="flex justify-center mt-6">
             <BiLoaderCircle className="animate-spin text-3xl text-blue-500" />
           </div>
-        )}
-        {searchTerm && !isLoading && (
+        ) : searchTerm && !isLoading ? (
           <div className="mt-4 bg-white rounded-lg shadow-lg p-4">
             <h2 className="text-gray-700 text-lg font-semibold mb-2">Search Results</h2>
             {filteredResults.length > 0 ? (
@@ -144,11 +144,13 @@ function Search() {
               <div className="text-center text-gray-500">No results found</div>
             )}
           </div>
+        ) : (
+          <div className="text-center text-gray-500">Enter a search term to find healthcare providers.</div>
         )}
         <div className="mt-8 bg-white rounded-lg shadow-lg p-6">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">Nearby Healthcare Providers</h2>
           <LoadScript
-            googleMapsApiKey="AIzaSyBurBvVQtMRzrS1CvsoGm0hiGH6Doa28SM"
+            googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY"
             onError={() => setMapError(true)}
             onLoad={() => setMapError(false)}
           >
