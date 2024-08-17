@@ -10,7 +10,7 @@ import {
   AiOutlineShareAlt,
   AiOutlineEdit,
   AiOutlineCloudSync,
-  AiOutlineUser,
+  AiOutlineClose,
 } from 'react-icons/ai';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
@@ -21,6 +21,7 @@ import { getAuth, updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { firestore } from '../firebase';
 import Loader from './Loader';
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 Modal.setAppElement('#root');
 
@@ -30,8 +31,15 @@ function UserProfile() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
   const [newPhotoURL, setNewPhotoURL] = useState('');
+  const [newPhoneNumber, setNewPhoneNumber] = useState('');
+  const [newAddress, setNewAddress] = useState('');
+  const [newDateOfBirth, setNewDateOfBirth] = useState('');
+  const [newGender, setNewGender] = useState('');
+  const [newSecurityQuestion, setNewSecurityQuestion] = useState('');
+  const [newSecurityAnswer, setNewSecurityAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [hovering, setHovering] = useState(false); // Track hover state for image
   const [chartData, setChartData] = useState({
     labels: ['Completed', 'Pending'],
     datasets: [
@@ -43,6 +51,7 @@ function UserProfile() {
     ],
   });
 
+  const storage = getStorage();
   const auth = getAuth();
 
   useEffect(() => {
@@ -53,15 +62,14 @@ function UserProfile() {
         setUserDetails(userData);
         setNewDisplayName(userData.displayName);
         setNewPhotoURL(userData.photoURL || '');
+        setNewPhoneNumber(userData.phoneNumber || '');
+        setNewAddress(userData.address || '');
+        setNewDateOfBirth(userData.dateOfBirth || '');
+        setNewGender(userData.gender || '');
+        setNewSecurityQuestion(userData.securityQuestion || '');
+        setNewSecurityAnswer(userData.securityAnswer || '');
       } catch (error) {
         console.error('Error fetching user details: ', error);
-        setUserDetails({
-          displayName: 'John Doe',
-          email: 'johndoe@example.com',
-          photoURL: '',
-        });
-        setNewDisplayName('John Doe');
-        setNewPhotoURL('');
       } finally {
         setLoading(false);
       }
@@ -85,17 +93,35 @@ function UserProfile() {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
+    setMessage("");
     try {
-      await updateProfile(auth.currentUser, { displayName: newDisplayName, photoURL: newPhotoURL });
-      const userDoc = doc(firestore, 'users', auth.currentUser.uid);
-      await updateDoc(userDoc, { displayName: newDisplayName, photoURL: newPhotoURL });
+      // Update the user's profile with the new display name and photo URL
+      await updateProfile(auth.currentUser, {
+        displayName: newDisplayName,
+        photoURL: newPhotoURL, // Now using the Firebase Storage URL
+      });
 
+      // Update the user's document in Firestore
+      const userDoc = doc(firestore, 'users', auth.currentUser.uid);
+      await updateDoc(userDoc, {
+        displayName: newDisplayName,
+        photoURL: newPhotoURL, // Update Firestore with the same URL
+        phoneNumber: newPhoneNumber,
+        address: newAddress,
+        dateOfBirth: newDateOfBirth,
+        gender: newGender,
+        securityQuestion: newSecurityQuestion,
+        securityAnswer: newSecurityAnswer,
+      });
+
+      // Update local state to reflect the new data
       setUserDetails({ ...userDetails, displayName: newDisplayName, photoURL: newPhotoURL });
-      setMessage('Profile updated successfully!');
+
+      setMessage("Profile updated successfully!");
       closeModal();
     } catch (error) {
-      setMessage('Error updating profile: ' + error.message);
+      console.error("Error updating profile: ", error);
+      setMessage(`Error updating profile: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -109,14 +135,40 @@ function UserProfile() {
       .join('');
   };
 
-  const handlePhotoChange = (e) => {
+  const handlePhotoChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewPhotoURL(reader.result);
-      };
-      reader.readAsDataURL(file);
+      const storageRef = ref(storage, `profilePictures/${auth.currentUser.uid}`);
+      try {
+        // Upload file to Firebase Storage
+        const snapshot = await uploadBytes(storageRef, file);
+
+        // Get the download URL
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        // Update the user's photo URL
+        setNewPhotoURL(downloadURL);
+
+      } catch (error) {
+        console.error("Error uploading photo: ", error);
+        setMessage("Error uploading photo. Please try again.");
+      }
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    try {
+      // Update the user's profile and Firestore document to remove the photo URL
+      await updateProfile(auth.currentUser, { photoURL: null });
+      const userDoc = doc(firestore, 'users', auth.currentUser.uid);
+      await updateDoc(userDoc, { photoURL: null });
+
+      // Remove the photo URL from the local state
+      setNewPhotoURL('');
+      setUserDetails({ ...userDetails, photoURL: null });
+    } catch (error) {
+      console.error("Error removing photo: ", error);
+      setMessage("Error removing photo. Please try again.");
     }
   };
 
@@ -140,7 +192,18 @@ function UserProfile() {
           <>
             <div className="flex flex-col items-center space-y-4 bg-white p-6 rounded-lg shadow-lg relative">
               {userDetails.photoURL ? (
-                <img src={userDetails.photoURL} alt="User" className="w-24 h-24 rounded-full shadow-lg" />
+                <div className="relative" onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)}>
+                  <img src={userDetails.photoURL} alt="User" className="w-24 h-24 rounded-full shadow-lg" />
+                  {hovering && (
+                    <button
+                      onClick={handleRemovePhoto}
+                      className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                      aria-label="Remove Photo"
+                    >
+                      <AiOutlineClose className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               ) : (
                 <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-black font-bold text-3xl shadow-lg">
                   {getInitials(displayName)}
@@ -264,6 +327,76 @@ function UserProfile() {
             />
           </div>
           <div>
+            <label htmlFor="phone" className="block text-gray-700">Phone Number</label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={newPhoneNumber}
+              onChange={(e) => setNewPhoneNumber(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+          <div>
+            <label htmlFor="address" className="block text-gray-700">Address</label>
+            <input
+              type="text"
+              id="address"
+              name="address"
+              value={newAddress}
+              onChange={(e) => setNewAddress(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+          <div>
+            <label htmlFor="dob" className="block text-gray-700">Date of Birth</label>
+            <input
+              type="date"
+              id="dob"
+              name="dob"
+              value={newDateOfBirth}
+              onChange={(e) => setNewDateOfBirth(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+          <div>
+            <label htmlFor="gender" className="block text-gray-700">Gender</label>
+            <select
+              id="gender"
+              name="gender"
+              value={newGender}
+              onChange={(e) => setNewGender(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            >
+              <option value="" disabled>Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="securityQuestion" className="block text-gray-700">Security Question</label>
+            <input
+              type="text"
+              id="securityQuestion"
+              name="securityQuestion"
+              value={newSecurityQuestion}
+              onChange={(e) => setNewSecurityQuestion(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+          <div>
+            <label htmlFor="securityAnswer" className="block text-gray-700">Security Answer</label>
+            <input
+              type="text"
+              id="securityAnswer"
+              name="securityAnswer"
+              value={newSecurityAnswer}
+              onChange={(e) => setNewSecurityAnswer(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+          <div>
             <label htmlFor="photo" className="block text-gray-700">Profile Photo</label>
             <input
               type="file"
@@ -273,7 +406,25 @@ function UserProfile() {
               onChange={handlePhotoChange}
               className="w-full p-2 border rounded-md"
             />
-            {newPhotoURL && <img src={newPhotoURL} alt="Profile Preview" className="w-24 h-24 rounded-full mt-2" />}
+            {newPhotoURL && (
+              <div className="relative mt-2 w-24 h-24">
+                <img
+                  src={newPhotoURL}
+                  alt="Profile Preview"
+                  className="rounded-full w-full h-full"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  onMouseEnter={() => setHovering(true)}
+                  onMouseLeave={() => setHovering(false)}
+                  className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
+                  aria-label="Remove Photo"
+                >
+                  <AiOutlineClose className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex justify-end space-x-4">
             <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400 transition">

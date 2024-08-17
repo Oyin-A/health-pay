@@ -1,17 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
+import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import axios from 'axios';
 
 const PaymentMethods = ({
   transactions,
   handleRemovePaymentMethod,
-  handleNewPaymentMethodChange,
   handleAddPaymentMethod,
-  newPaymentMethod,
   getCardIcon
 }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleAddNewPaymentMethod = async () => {
+    if (!stripe || !elements) {
+      // Stripe.js has not yet loaded.
+      return;
+    }
+
+    setIsProcessing(true);
+
+    // Create a payment method using Stripe.js
+    const cardElement = elements.getElement(CardElement);
+    const { error, paymentMethod } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+    });
+
+    if (error) {
+      setMessage(error.message);
+      setIsProcessing(false);
+    } else {
+      // Optionally: Send paymentMethod.id to your backend to save it.
+      handleAddPaymentMethod(paymentMethod.id);
+      setMessage('Payment method added successfully!');
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg">
       <h2 className="text-lg font-bold mb-4 text-black">Manage your payment methods</h2>
@@ -42,24 +73,16 @@ const PaymentMethods = ({
         ))}
       </div>
       <div className="mt-6">
-        <select
-          value={newPaymentMethod}
-          onChange={handleNewPaymentMethodChange}
-          className="w-full bg-gray-200 text-gray-900 py-2 px-4 rounded-md shadow-md"
-        >
-          <option value="" disabled>Select Payment Method</option>
-          <option value="Visa">Visa</option>
-          <option value="Mastercard">Mastercard</option>
-          <option value="Amex">Amex</option>
-          <option value="Discover">Discover</option>
-        </select>
+        <CardElement className="p-4 bg-gray-200 rounded-md shadow-md" />
         <button
-          onClick={handleAddPaymentMethod}
+          onClick={handleAddNewPaymentMethod}
+          disabled={isProcessing}
           className="w-full bg-black text-white py-2 px-4 mt-4 rounded-md shadow-md transform transition-transform hover:scale-105 flex items-center justify-center"
         >
           <FontAwesomeIcon icon={faPlusCircle} className="mr-2" />
-          Add New Payment Method
+          {isProcessing ? 'Processing...' : 'Add New Payment Method'}
         </button>
+        {message && <p className="text-green-500 mt-4">{message}</p>}
       </div>
     </div>
   );

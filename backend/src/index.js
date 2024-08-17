@@ -4,6 +4,8 @@ const admin = require('firebase-admin');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const stripeRoutes = require('./stripe'); // Adjust the path if necessary
+
 
 const serviceAccount = {
   type: "service_account",
@@ -27,8 +29,10 @@ const db = admin.firestore();
 const app = express();
 const port = process.env.PORT || 5000;
 
+
 app.use(cors());
 app.use(bodyParser.json());
+app.use('/api/stripe', stripeRoutes);
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;

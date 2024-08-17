@@ -28,11 +28,15 @@ import NearbyInsurance from './components/NearbyInsurance';
 import FAQ from './components/FAQ';
 import CustomerService from './components/CustomerService';
 import Appointments from './components/Appointments';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import BookAppointment from './components/BookAppointment';
 
 function App() {
   const [user, setUser] = useState(null);
   const [firstTimeUser, setFirstTimeUser] = useState(false);
   const [loading, setLoading] = useState(true);
+  const stripePromise = loadStripe('pk_test_51PoVmkL3UFtopiib4YEA88EELjcOL6J6YPXzMIlbkohGGZLt3TRqvLrTPVW7VA73plaxiM5LNMn1UpOk0p79pmYQ00npB0n2Sh');
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -58,37 +62,40 @@ function App() {
   }
 
   return (
-    <Router>
-      <div>
-        <Routes>
-          <Route path="/" element={<WelcomeScreen />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/user-profile" element={<UserProfile />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-          <Route path="/welcome-after-acceptance" element={<WelcomeAfterAcceptance />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/medical-history" element={<MedicalHistory />} />
-          <Route path="/nearby-hospitals" element={<NearbyHospitals />} />
-          <Route path="/make-claims" element={<MakeClaims />} />
-          <Route path="/add-new-claim" element={<AddNewClaim />} />
-          <Route path="/make-payments" element={<MakePayments />} />
-          <Route path="/financial" element={<Financial />} />
-          <Route path="/savings-progress" element={<SavingsProgress />} />
-          <Route path="/transactions" element={<Transactions />} />
-          <Route path="/payment-methods" element={<PaymentMethods />} />
-          <Route path="/add-new-payment-method" element={<AddNewPaymentMethod />} />
-          <Route path="/nearby-insurance" element={<NearbyInsurance />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/customer-service" element={<CustomerService />} />
-          <Route path="/appointments" element={<Appointments />} />
-        </Routes>
-      </div>
-    </Router>
+    <Elements stripe={stripePromise}>
+      <Router>
+        <div>
+          <Routes>
+            <Route path="/" element={<WelcomeScreen />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/user-profile" element={<UserProfile />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+            <Route path="/welcome-after-acceptance" element={<WelcomeAfterAcceptance />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/medical-history" element={<MedicalHistory />} />
+            <Route path="/nearby-hospitals" element={<NearbyHospitals />} />
+            <Route path="/make-claims" element={<MakeClaims />} />
+            <Route path="/add-new-claim" element={<AddNewClaim />} />
+            <Route path="/make-payments" element={<MakePayments />} />
+            <Route path="/financial" element={<Financial />} />
+            <Route path="/savings-progress" element={<SavingsProgress />} />
+            <Route path="/transactions" element={<Transactions />} />
+            <Route path="/payment-methods" element={<PaymentMethods />} />
+            <Route path="/add-new-payment-method" element={<AddNewPaymentMethod />} />
+            <Route path="/book-appointment/:id" element={<BookAppointment />} />
+            <Route path="/nearby-insurance" element={<NearbyInsurance />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/customer-service" element={<CustomerService />} />
+            <Route path="/appointments" element={<Appointments />} />
+          </Routes>
+        </div>
+      </Router>
+    </Elements>
   );
 }
 

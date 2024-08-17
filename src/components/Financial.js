@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import HelpChatWrapper from './HelpChatWrapper';
+import HelpChatModal from './HelpChatModal';
 import { getAccountBalance, getHSA } from './financialService';
 import { Line } from 'react-chartjs-2';
 import Chart from 'chart.js/auto';
@@ -11,7 +11,7 @@ import {
   AiOutlineBell,
   AiOutlineArrowLeft,
   AiOutlineInfoCircle,
-  AiOutlineStar
+  AiOutlineStar,
 } from 'react-icons/ai';
 import { FaHandsHelping, FaRegLightbulb, FaPodcast, FaCheckCircle } from 'react-icons/fa';
 import { FiBarChart2 } from 'react-icons/fi';
@@ -20,6 +20,7 @@ import 'tippy.js/dist/tippy.css';
 
 function Financial() {
   const navigate = useNavigate();
+  const [isHelpChatOpen, setIsHelpChatOpen] = useState(false);
   const [balance, setBalance] = useState(0);
   const [hsa, setHSA] = useState({ balance: 0, contributions: [], withdrawals: [] });
   const [advice, setAdvice] = useState([]);
@@ -30,61 +31,68 @@ function Financial() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const accountBalance = await getAccountBalance();
-      setBalance(accountBalance);
+      try {
+        const accountBalance = await getAccountBalance();
+        setBalance(accountBalance);
 
-      const hsaDetails = await getHSA();
-      setHSA(hsaDetails);
+        const hsaDetails = await getHSA();
+        setHSA(hsaDetails);
 
-      // Example advice data
-      setAdvice([
-        { title: 'Save on Prescription Drugs', content: 'Consider generic brands or using a discount card.' },
-        { title: 'Health Insurance Tips', content: 'Check if your insurance covers annual checkups.' },
-        { title: 'Regular Check-ups', content: 'Schedule regular check-ups to catch health issues early.' },
-        { title: 'Healthy Lifestyle', content: 'Maintain a balanced diet and exercise regularly to prevent diseases.' },
-      ]);
+        setAdvice([
+          { title: 'Save on Prescription Drugs', content: 'Consider generic brands or using a discount card.' },
+          { title: 'Health Insurance Tips', content: 'Check if your insurance covers annual checkups.' },
+          { title: 'Regular Check-ups', content: 'Schedule regular check-ups to catch health issues early.' },
+          { title: 'Healthy Lifestyle', content: 'Maintain a balanced diet and exercise regularly to prevent diseases.' },
+        ]);
 
-      // Example podcasts data
-      setPodcasts([
-        { title: 'Managing Healthcare Costs', link: '#' },
-        { title: 'Understanding Health Insurance', link: '#' },
-      ]);
+        setPodcasts([
+          { title: 'Managing Healthcare Costs', link: '#' },
+          { title: 'Understanding Health Insurance', link: '#' },
+        ]);
 
-      // Example notifications data
-      setNotifications([
-        { message: 'New financial advice available!', link: '#', icon: <AiOutlineInfoCircle className="text-xl text-purple-600" /> },
-        { message: 'Your HSA balance has been updated.', link: '#', icon: <AiOutlineDollarCircle className="text-xl text-purple-600" /> },
-        { message: 'Check out new partners with discounts.', link: '#', icon: <FaRegLightbulb className="text-xl text-purple-600" /> },
-      ]);
+        setNotifications([
+          { message: 'New financial advice available!', link: '#', icon: <AiOutlineInfoCircle className="text-xl text-purple-600" /> },
+          { message: 'Your HSA balance has been updated.', link: '#', icon: <AiOutlineDollarCircle className="text-xl text-purple-600" /> },
+          { message: 'Check out new partners with discounts.', link: '#', icon: <FaRegLightbulb className="text-xl text-purple-600" /> },
+        ]);
 
-      // Example goals data
-      setGoals([
-        { title: 'Save $500 for Emergency Fund', progress: 80 },
-        { title: 'Reduce Monthly Medical Expenses', progress: 60 },
-      ]);
+        setGoals([
+          { title: 'Save $500 for Emergency Fund', progress: 80 },
+          { title: 'Reduce Monthly Medical Expenses', progress: 60 },
+        ]);
 
-      // Example expense trends data
-      const data = {
-        labels: ['January', 'February', 'March', 'April', 'May'],
-        datasets: [
-          {
-            label: 'Monthly Expenses',
-            data: [65, 59, 80, 81, 56],
-            fill: false,
-            backgroundColor: '#FF6384',
-            borderColor: '#FF6384',
-          },
-        ],
-      };
+        const data = {
+          labels: ['January', 'February', 'March', 'April', 'May'],
+          datasets: [
+            {
+              label: 'Monthly Expenses',
+              data: [65, 59, 80, 81, 56],
+              fill: false,
+              backgroundColor: '#FF6384',
+              borderColor: '#FF6384',
+            },
+          ],
+        };
 
-      setExpenseTrendsData(data);
+        setExpenseTrendsData(data);
+      } catch (error) {
+        console.error('Error fetching financial data:', error);
+      }
     };
 
     fetchData();
   }, []);
 
+  const openHelpChat = () => {
+    setIsHelpChatOpen(true);
+  };
+
+  const closeHelpChat = () => {
+    setIsHelpChatOpen(false);
+  };
+
   return (
-    <HelpChatWrapper>
+    <div className="min-h-screen flex flex-col bg-gradient-to-r from-blue-500 to-purple-600 text-white pb-12">
       <header className="bg-black py-4 px-6 shadow-md flex justify-between items-center text-white">
         <button onClick={() => navigate(-1)} className="text-white hover:text-gray-400 transition-all duration-300">
           <AiOutlineArrowLeft className="text-2xl" />
@@ -253,13 +261,14 @@ function Financial() {
         </section>
 
         <button
-          onClick={() => alert('Advisor Chat Coming Soon!')}
+          onClick={openHelpChat}
           className="fixed bottom-16 right-6 bg-red-500 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-3xl font-bold transition-transform hover:scale-105 hover:bg-red-600"
         >
           ?
         </button>
       </main>
-    </HelpChatWrapper>
+      <HelpChatModal isOpen={isHelpChatOpen} onClose={closeHelpChat} />
+    </div>
   );
 }
 

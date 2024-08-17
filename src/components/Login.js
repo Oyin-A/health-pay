@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebase'; // Import your Firebase configuration
 import { FcGoogle } from 'react-icons/fc';
 import { FaUniversity } from 'react-icons/fa';
@@ -49,13 +49,30 @@ function Login() {
     }
   };
 
-  const handleSSO = (provider) => {
-    setSsoLoading({ ...ssoLoading, [provider]: true });
-    // Simulate an SSO login
-    setTimeout(() => {
-      setSsoLoading({ ...ssoLoading, [provider]: false });
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    setSsoLoading({ ...ssoLoading, google: true });
+    try {
+      await signInWithPopup(auth, provider);
+      setSsoLoading({ ...ssoLoading, google: false });
       navigate('/dashboard');
-    }, 1000); // Simulating a 1-second delay for SSO login
+    } catch (error) {
+      setSsoLoading({ ...ssoLoading, google: false });
+      setErrors({ general: errorMessages[error.code] || errorMessages['default'] });
+    }
+  };
+
+  const handleSSO = (provider) => {
+    if (provider === 'google') {
+      handleGoogleSignIn();
+    } else {
+      setSsoLoading({ ...ssoLoading, [provider]: true });
+      // Simulate an SSO login
+      setTimeout(() => {
+        setSsoLoading({ ...ssoLoading, [provider]: false });
+        navigate('/dashboard');
+      }, 1000); // Simulating a 1-second delay for SSO login
+    }
   };
 
   return (
@@ -149,7 +166,7 @@ function Login() {
         <p className="text-center text-lg text-gray-200 mt-6 font-poppins">or</p>
         <div className="w-full space-y-4">
           <button
-            onClick={() => handleSSO('google')}
+            onClick={handleGoogleSignIn}
             className="w-full flex items-center justify-center py-3 px-6 border border-transparent text-lg font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-300 shadow-lg"
             disabled={ssoLoading.google}
             aria-busy={ssoLoading.google}

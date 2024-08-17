@@ -4,7 +4,7 @@ import Footer from './Footer';
 import HelpChatModal from './HelpChatModal';
 import { getUserDetails } from './authService';
 import {
-  FiArrowLeft, FiUser, FiPlusCircle, FiInfo, FiLoader, FiTrash, FiBell, FiEdit,
+  FiArrowLeft, FiUser, FiPlusCircle, FiTrash, FiBell, FiEdit,
 } from 'react-icons/fi';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -18,13 +18,21 @@ import 'tippy.js/dist/tippy.css';
 import Modal from 'react-modal';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 Modal.setAppElement('#root');
 
 function MakePayments() {
   const navigate = useNavigate();
+  const stripe = useStripe();
+  const elements = useElements();
   const [isHelpChatOpen, setIsHelpChatOpen] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
+  const [paymentMethods, setPaymentMethods] = useState([
+    { id: 1, method: 'Visa **** 1234', isDefault: true },
+    { id: 2, method: 'Mastercard **** 5678', isDefault: false },
+    { id: 3, method: 'Amex **** 9101', isDefault: false }
+  ]);
   const [transactions, setTransactions] = useState([
     { id: 1, date: '2023-07-20', method: 'Visa **** 1234', amount: '$200', status: 'Completed', transactionId: 'TXN12345' },
     { id: 2, date: '2023-07-18', method: 'Mastercard **** 5678', amount: '$150', status: 'Pending', transactionId: 'TXN12346' },
@@ -33,10 +41,16 @@ function MakePayments() {
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [newPaymentMethod, setNewPaymentMethod] = useState('');
   const [filter, setFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [message, setMessage] = useState('');
+  const [securePaymentsEnabled, setSecurePaymentsEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [editMethodDetails, setEditMethodDetails] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,9 +82,27 @@ function MakePayments() {
     }, 3000);
   }, []);
 
-  const handleAddPaymentMethod = () => {
-    addNotification('Payment method added successfully!');
-    // navigate to add new payment method page
+  const handleAddPaymentMethod = async () => {
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setIsProcessing(true);
+
+    const cardElement = elements.getElement(CardElement);
+    const { error, paymentMethod } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+    });
+
+    if (error) {
+      setMessage(error.message);
+      setIsProcessing(false);
+    } else {
+      addNotification('Payment method added successfully!');
+      setPaymentMethods(prevMethods => [...prevMethods, { id: paymentMethods.length + 1, method: `New Card **** ${paymentMethod.id.slice(-4)}`, isDefault: false }]);
+      setIsProcessing(false);
+    }
   };
 
   const handleRemovePaymentMethod = (method) => {
@@ -79,12 +111,42 @@ function MakePayments() {
   };
 
   const confirmRemovePaymentMethod = () => {
+    setPaymentMethods(paymentMethods.filter((method) => method.id !== selectedPaymentMethod.id));
     addNotification(`${selectedPaymentMethod.method} removed successfully!`);
     setIsModalOpen(false);
-    // Implement the removal logic here
   };
 
-  const handleNewPaymentMethodChange = (e) => setNewPaymentMethod(e.target.value);
+  const setAsDefaultPaymentMethod = (methodId) => {
+    setPaymentMethods(paymentMethods.map((method) => ({
+      ...method,
+      isDefault: method.id === methodId,
+    })));
+    addNotification('Default payment method updated successfully!');
+  };
+
+  const toggleSecurePayments = () => {
+    setSecurePaymentsEnabled(!securePaymentsEnabled);
+    addNotification(`Secure Payments ${securePaymentsEnabled ? 'Disabled' : 'Enabled'}`);
+  };
+
+  const toggleNotifications = () => {
+    setNotificationsEnabled(!notificationsEnabled);
+    addNotification(`Payment Notifications ${notificationsEnabled ? 'Disabled' : 'Enabled'}`);
+  };
+
+  const handleEditPaymentMethod = (method) => {
+    setSelectedPaymentMethod(method);
+    setEditMethodDetails(method.method); // Pre-fill the modal with current method details
+    setIsEditModalOpen(true);
+  };
+
+  const confirmEditPaymentMethod = () => {
+    setPaymentMethods(paymentMethods.map((method) =>
+      method.id === selectedPaymentMethod.id ? { ...method, method: editMethodDetails } : method
+    ));
+    addNotification(`${selectedPaymentMethod.method} edited successfully!`);
+    setIsEditModalOpen(false);
+  };
 
   const getCardIcon = (method) => {
     if (method.includes('Visa')) return faCcVisa;
@@ -135,7 +197,7 @@ function MakePayments() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-lg font-bold mb-4">Manage your payment methods</h2>
             <div className="space-y-4">
-              {transactions.map((method) => (
+              {paymentMethods.map((method) => (
                 <div key={method.id} className="flex items-center justify-between bg-gray-100 p-4 rounded-md shadow-sm">
                   <div className="flex items-center">
                     <FontAwesomeIcon icon={getCardIcon(method.method)} className="w-8 h-8 text-blue-500 mr-4" />
@@ -146,10 +208,15 @@ function MakePayments() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Tippy content="Set as default payment method">
-                      <button className="text-white bg-black py-1 px-3 rounded-md shadow-md">Default</button>
+                      <button
+                        className={`text-white py-1 px-3 rounded-md shadow-md ${method.isDefault ? 'bg-green-600' : 'bg-black hover:bg-gray-800'}`}
+                        onClick={() => setAsDefaultPaymentMethod(method.id)}
+                      >
+                        {method.isDefault ? 'Default' : 'Set Default'}
+                      </button>
                     </Tippy>
                     <Tippy content="Edit payment method">
-                      <button className="text-blue-500 hover:text-blue-700">
+                      <button className="text-blue-500 hover:text-blue-700" onClick={() => handleEditPaymentMethod(method)}>
                         <FiEdit className="h-5 w-5" />
                       </button>
                     </Tippy>
@@ -163,24 +230,16 @@ function MakePayments() {
               ))}
             </div>
             <div className="mt-6">
-              <select
-                value={newPaymentMethod}
-                onChange={handleNewPaymentMethodChange}
-                className="w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-md shadow-md"
-              >
-                <option value="" disabled>Select Payment Method</option>
-                <option value="visa">Visa</option>
-                <option value="mastercard">Mastercard</option>
-                <option value="amex">American Express</option>
-                <option value="discover">Discover</option>
-              </select>
+              <CardElement className="p-4 bg-gray-100 rounded-md shadow-md" />
               <button
                 onClick={handleAddPaymentMethod}
                 className="w-full bg-black text-white py-2 px-4 mt-4 rounded-md shadow-md transform transition-transform hover:scale-105 flex items-center justify-center"
+                disabled={isProcessing}
               >
                 <FiPlusCircle className="mr-2" />
-                Add New Payment Method
+                {isProcessing ? 'Processing...' : 'Add New Payment Method'}
               </button>
+              {message && <p className="text-green-500 mt-4">{message}</p>}
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
@@ -190,21 +249,31 @@ function MakePayments() {
                 <div className="flex items-center">
                   <FontAwesomeIcon icon={faLock} className="w-8 h-8 mr-4 text-yellow-600" />
                   <div>
-                    <p className="text-gray-900">Secure Payments Enabled</p>
+                    <p className="text-gray-900">Secure Payments {securePaymentsEnabled ? 'Enabled' : 'Disabled'}</p>
                     <p className="text-gray-500">Extra security with two-factor authentication</p>
                   </div>
                 </div>
-                <button onClick={() => addNotification('Secure Payments Disabled')} className="text-white bg-blue-500 py-1 px-3 rounded-md shadow-md hover:bg-blue-600">Disable</button>
+                <button
+                  onClick={toggleSecurePayments}
+                  className="text-white bg-blue-500 py-1 px-3 rounded-md shadow-md hover:bg-blue-600"
+                >
+                  {securePaymentsEnabled ? 'Disable' : 'Enable'}
+                </button>
               </div>
               <div className="flex items-center justify-between bg-gray-100 p-4 rounded-md shadow-sm">
                 <div className="flex items-center">
                   <FiBell className="w-8 h-8 mr-4 text-red-600" />
                   <div>
-                    <p className="text-gray-900">Payment Notifications</p>
+                    <p className="text-gray-900">Payment Notifications {notificationsEnabled ? 'Enabled' : 'Disabled'}</p>
                     <p className="text-gray-500">Receive notifications for all payment actions</p>
                   </div>
                 </div>
-                <button onClick={() => addNotification('Payment Notifications Enabled')} className="text-white bg-blue-500 py-1 px-3 rounded-md shadow-md hover:bg-blue-600">Enable</button>
+                <button
+                  onClick={toggleNotifications}
+                  className="text-white bg-blue-500 py-1 px-3 rounded-md shadow-md hover:bg-blue-600"
+                >
+                  {notificationsEnabled ? 'Disable' : 'Enable'}
+                </button>
               </div>
             </div>
           </div>
@@ -234,11 +303,6 @@ function MakePayments() {
                     <p className="text-gray-400">{transaction.transactionId} - {transaction.status}</p>
                   </div>
                   <p className="text-gray-900">{transaction.amount}</p>
-                  <Tippy content="Remove">
-                    <button className="text-red-500 hover:text-red-700" onClick={() => handleRemovePaymentMethod(transaction)}>
-                      <FiTrash className="h-5 w-5" />
-                    </button>
-                  </Tippy>
                 </div>
               ))}
             </div>
@@ -276,6 +340,27 @@ function MakePayments() {
           <div className="mt-6 flex justify-end space-x-4">
             <button onClick={() => setIsModalOpen(false)} className="bg-gray-300 text-gray-900 py-2 px-4 rounded-md shadow-md hover:bg-gray-400">Cancel</button>
             <button onClick={confirmRemovePaymentMethod} className="bg-red-500 text-white py-2 px-4 rounded-md shadow-md hover:bg-red-600">Remove</button>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={isEditModalOpen}
+        onRequestClose={() => setIsEditModalOpen(false)}
+        contentLabel="Edit Payment Method"
+        className="fixed inset-0 flex items-center justify-center"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50"
+      >
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+          <h2 className="text-xl font-bold mb-4">Edit Payment Method</h2>
+          <input
+            type="text"
+            value={editMethodDetails}
+            onChange={(e) => setEditMethodDetails(e.target.value)}
+            className="w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-md shadow-md mb-4"
+          />
+          <div className="mt-6 flex justify-end space-x-4">
+            <button onClick={() => setIsEditModalOpen(false)} className="bg-gray-300 text-gray-900 py-2 px-4 rounded-md shadow-md hover:bg-gray-400">Cancel</button>
+            <button onClick={confirmEditPaymentMethod} className="bg-blue-500 text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-600">Save Changes</button>
           </div>
         </div>
       </Modal>
