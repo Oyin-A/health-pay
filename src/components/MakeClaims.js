@@ -1,22 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Footer from './Footer';
-import HelpChatModal from './HelpChatModal';
-import { getUserDetails } from './authService';
-import {
-  FiArrowLeft, FiUser, FiPlusCircle, FiCheckCircle, FiXCircle,
-  FiInfo, FiSearch, FiChevronLeft, FiChevronRight, FiLoader
-} from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiPlusCircle, FiCheckCircle, FiXCircle, FiInfo, FiSearch, FiChevronLeft, FiChevronRight, FiEdit, FiCopy } from 'react-icons/fi';
 import { MdPendingActions } from 'react-icons/md';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
-
-function getInitials(name) {
-  return name
-    .split(' ')
-    .map((word) => word[0])
-    .join('');
-}
+import Footer from './Footer';
+import HelpChatModal from './HelpChatModal';
+import { getUserDetails } from './authService';
 
 function MakeClaims() {
   const navigate = useNavigate();
@@ -26,37 +16,32 @@ function MakeClaims() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedClaim, setSelectedClaim] = useState(null);
-  const [filterStatus, setFilterStatus] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [notifications, setNotifications] = useState([]);
+  const [isEditing, setIsEditing] = useState(false); 
+  const [status, setStatus] = useState(''); 
+  const [filterStatus, setFilterStatus] = useState(''); 
   const claimsPerPage = 6;
 
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const details = await getUserDetails();
-        setUserDetails(details);
-        setIsLoading(false);
+        const user = await getUserDetails();
+        setUserDetails(user);
       } catch (error) {
-        console.error('Failed to fetch user details:', error);
+        console.error('Error fetching user details:', error);
       }
     };
-
     fetchUserDetails();
 
-    // Mock data for claims
-    setClaims([
-      { id: 12345, date: '01/10/2023', amount: '$500.00', status: 'Pending' },
-      { id: 12346, date: '01/11/2023', amount: '$300.00', status: 'Approved' },
-      { id: 12347, date: '01/12/2023', amount: '$200.00', status: 'Rejected' },
-      { id: 12348, date: '01/13/2023', amount: '$700.00', status: 'Pending' },
-      { id: 12349, date: '01/14/2023', amount: '$900.00', status: 'Approved' },
-      { id: 12350, date: '01/15/2023', amount: '$100.00', status: 'Rejected' },
-      { id: 12351, date: '01/16/2023', amount: '$250.00', status: 'Pending' },
-      { id: 12352, date: '01/17/2023', amount: '$350.00', status: 'Approved' },
-      { id: 12353, date: '01/18/2023', amount: '$450.00', status: 'Rejected' },
-    ]);
+    const savedClaims = JSON.parse(localStorage.getItem('claims')) || [];
+    setClaims(savedClaims);
   }, []);
+
+  const getInitials = (name) => {
+    return name
+      .split(' ')
+      .map((part) => part[0])
+      .join('');
+  };
 
   const openHelpChat = () => {
     setIsHelpChatOpen(true);
@@ -68,6 +53,8 @@ function MakeClaims() {
 
   const openClaimDetails = (claim) => {
     setSelectedClaim(claim);
+    setStatus(claim.status);
+    setIsEditing(false);
   };
 
   const closeClaimDetails = () => {
@@ -76,7 +63,7 @@ function MakeClaims() {
 
   const handleFilterChange = (e) => {
     setFilterStatus(e.target.value);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setCurrentPage(1);
   };
 
   const handleSortChange = (sortField) => {
@@ -92,6 +79,20 @@ function MakeClaims() {
     setClaims(sortedClaims);
   };
 
+  const saveChanges = () => {
+    const updatedClaims = claims.map(claim =>
+      claim.id === selectedClaim.id ? { ...claim, status } : claim
+    );
+    setClaims(updatedClaims);
+    localStorage.setItem('claims', JSON.stringify(updatedClaims));
+    closeClaimDetails(); 
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    alert('Claim ID copied to clipboard!');
+  };
+
   const filteredClaims = claims.filter((claim) =>
     (claim.id.toString().includes(searchTerm) ||
       claim.date.includes(searchTerm) ||
@@ -103,6 +104,8 @@ function MakeClaims() {
   const indexOfLastClaim = currentPage * claimsPerPage;
   const indexOfFirstClaim = indexOfLastClaim - claimsPerPage;
   const currentClaims = filteredClaims.slice(indexOfFirstClaim, indexOfLastClaim);
+
+  const totalPages = Math.ceil(filteredClaims.length / claimsPerPage) || 1;
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -167,11 +170,7 @@ function MakeClaims() {
             Status
           </button>
         </div>
-        {isLoading ? (
-          <div className="flex justify-center items-center min-h-[200px]">
-            <FiLoader className="h-10 w-10 animate-spin" />
-          </div>
-        ) : (
+        {filteredClaims.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {currentClaims.map((claim) => (
               <div
@@ -184,9 +183,20 @@ function MakeClaims() {
                 ></div>
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-gray-800 text-xl font-bold">Claim #{claim.id}</p>
-                  <Tippy content="More details about this claim">
-                    <FiInfo className="text-blue-500 h-6 w-6 cursor-pointer" />
-                  </Tippy>
+                  <div className="flex items-center space-x-2">
+                    <Tippy content="Copy Claim ID">
+                      <FiCopy
+                        className="text-blue-500 h-6 w-6 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyToClipboard(claim.id);
+                        }}
+                      />
+                    </Tippy>
+                    <Tippy content="More details about this claim">
+                      <FiInfo className="text-blue-500 h-6 w-6 cursor-pointer" />
+                    </Tippy>
+                  </div>
                 </div>
                 <p className="text-gray-500">Submitted on {claim.date}</p>
                 <p className="text-gray-800 text-lg">{claim.amount}</p>
@@ -205,6 +215,10 @@ function MakeClaims() {
               </div>
             ))}
           </div>
+        ) : (
+          <div className="flex justify-center items-center min-h-[200px]">
+            <p className="text-gray-600 text-lg">No claims have been submitted yet.</p>
+          </div>
         )}
         <div className="flex justify-between items-center mt-4">
           <button
@@ -215,12 +229,12 @@ function MakeClaims() {
             <FiChevronLeft className="h-5 w-5" />
           </button>
           <div className="text-black">
-            Page {currentPage} of {Math.ceil(filteredClaims.length / claimsPerPage)}
+            Page {currentPage} of {totalPages}
           </div>
           <button
             onClick={() => paginate(currentPage + 1)}
             className="bg-gray-200 text-black py-1 px-3 rounded-md shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={currentPage === Math.ceil(filteredClaims.length / claimsPerPage)}
+            disabled={currentPage === totalPages}
           >
             <FiChevronRight className="h-5 w-5" />
           </button>
@@ -244,16 +258,62 @@ function MakeClaims() {
             <p><strong>Claim ID:</strong> {selectedClaim.id}</p>
             <p><strong>Date Submitted:</strong> {selectedClaim.date}</p>
             <p><strong>Amount:</strong> {selectedClaim.amount}</p>
-            <p><strong>Status:</strong> {selectedClaim.status}</p>
-            <p className="mt-4">Detailed information about the claim</p>
+            <div className="mt-4">
+              <label htmlFor="status" className="block font-bold mb-2">Status:</label>
+              {isEditing ? (
+                <select
+                  id="status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              ) : (
+                <p>{status}</p>
+              )}
+            </div>
+            <div className="mt-4">
+              <p className="font-bold">Additional Comments or Documents:</p>
+              {selectedClaim.comments || selectedClaim.document ? (
+                <div>
+                  {selectedClaim.comments && <p>{selectedClaim.comments}</p>}
+                  {selectedClaim.document && <p>{selectedClaim.document.name}</p>}
+                </div>
+              ) : (
+                <p>No additional comments or files were submitted.</p>
+              )}
+            </div>
+            <div className="flex justify-end space-x-4 mt-6">
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={saveChanges}
+                    className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-600"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
-      {notifications.map((notification, index) => (
-        <div key={index} className="fixed top-16 right-6 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg animate-bounce">
-          {notification}
-        </div>
-      ))}
     </div>
   );
 }

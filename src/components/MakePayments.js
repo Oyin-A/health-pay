@@ -29,9 +29,9 @@ function MakePayments() {
   const [isHelpChatOpen, setIsHelpChatOpen] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
   const [paymentMethods, setPaymentMethods] = useState([
-    { id: 1, method: 'Visa **** 1234', isDefault: true },
-    { id: 2, method: 'Mastercard **** 5678', isDefault: false },
-    { id: 3, method: 'Amex **** 9101', isDefault: false }
+    { id: 1, method: 'Visa **** 1234', fullCardNumber: '4111111111111234', expiry: '12/23', isDefault: true },
+    { id: 2, method: 'Mastercard **** 5678', fullCardNumber: '5500000000005678', expiry: '12/24', isDefault: false },
+    { id: 3, method: 'Amex **** 9101', fullCardNumber: '340000000009101', expiry: '11/23', isDefault: false }
   ]);
   const [transactions, setTransactions] = useState([
     { id: 1, date: '2023-07-20', method: 'Visa **** 1234', amount: '$200', status: 'Completed', transactionId: 'TXN12345' },
@@ -43,14 +43,16 @@ function MakePayments() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
-  const [newPaymentMethod, setNewPaymentMethod] = useState('');
-  const [filter, setFilter] = useState('');
+  const [editMethodDetails, setEditMethodDetails] = useState('');
+  const [editExpiry, setEditExpiry] = useState('');
+  const [editCVV, setEditCVV] = useState('');
+  const [editBillingAddress, setEditBillingAddress] = useState('');
+  const [filter, setFilter] = useState(''); // Defined filter state
   const [sortOrder, setSortOrder] = useState('asc');
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState('');
   const [securePaymentsEnabled, setSecurePaymentsEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [editMethodDetails, setEditMethodDetails] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -136,15 +138,18 @@ function MakePayments() {
 
   const handleEditPaymentMethod = (method) => {
     setSelectedPaymentMethod(method);
-    setEditMethodDetails(method.method); // Pre-fill the modal with current method details
+    setEditMethodDetails(method.method);
+    setEditExpiry(method.expiry); // Initialize expiry field
+    setEditCVV(''); // Initialize CVV field
+    setEditBillingAddress(''); // Initialize billing address field
     setIsEditModalOpen(true);
   };
 
   const confirmEditPaymentMethod = () => {
     setPaymentMethods(paymentMethods.map((method) =>
-      method.id === selectedPaymentMethod.id ? { ...method, method: editMethodDetails } : method
+      method.id === selectedPaymentMethod.id ? { ...method, method: editMethodDetails, expiry: editExpiry } : method
     ));
-    addNotification(`${selectedPaymentMethod.method} edited successfully!`);
+    addNotification('Payment method edited successfully!');
     setIsEditModalOpen(false);
   };
 
@@ -203,7 +208,7 @@ function MakePayments() {
                     <FontAwesomeIcon icon={getCardIcon(method.method)} className="w-8 h-8 text-blue-500 mr-4" />
                     <div className="ml-4">
                       <p className="text-gray-900 font-medium">{method.method}</p>
-                      <p className="text-gray-500">Expires 12/23</p>
+                      <p className="text-gray-500">Expires {method.expiry}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -352,12 +357,42 @@ function MakePayments() {
       >
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
           <h2 className="text-xl font-bold mb-4">Edit Payment Method</h2>
-          <input
-            type="text"
-            value={editMethodDetails}
-            onChange={(e) => setEditMethodDetails(e.target.value)}
-            className="w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-md shadow-md mb-4"
-          />
+          <div>
+            <label className="block text-gray-700 font-medium">Card Number</label>
+            <input
+              type="text"
+              value={selectedPaymentMethod?.fullCardNumber || ''}
+              readOnly
+              className="w-full bg-gray-200 text-gray-900 py-2 px-4 rounded-md shadow-md mb-4"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-medium">Expiry Date</label>
+            <input
+              type="text"
+              value={editExpiry}
+              onChange={(e) => setEditExpiry(e.target.value)}
+              className="w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-md shadow-md mb-4"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-medium">CVV</label>
+            <input
+              type="text"
+              value={editCVV}
+              onChange={(e) => setEditCVV(e.target.value)}
+              className="w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-md shadow-md mb-4"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-medium">Billing Address</label>
+            <input
+              type="text"
+              value={editBillingAddress}
+              onChange={(e) => setEditBillingAddress(e.target.value)}
+              className="w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-md shadow-md mb-4"
+            />
+          </div>
           <div className="mt-6 flex justify-end space-x-4">
             <button onClick={() => setIsEditModalOpen(false)} className="bg-gray-300 text-gray-900 py-2 px-4 rounded-md shadow-md hover:bg-gray-400">Cancel</button>
             <button onClick={confirmEditPaymentMethod} className="bg-blue-500 text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-600">Save Changes</button>

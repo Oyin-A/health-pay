@@ -20,13 +20,37 @@ function SignUp() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
+  };
+
+  const validatePhoneNumber = (phoneNumber) => {
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+    return phoneRegex.test(phoneNumber);
+  };
+
   const validate = () => {
     const errors = {};
     if (!displayName) errors.displayName = 'Display Name is required';
     if (!email) errors.email = 'Email is required';
+    else if (!validateEmail(email)) errors.email = 'Invalid email format';
+
     if (!password) errors.password = 'Password is required';
+    else if (!validatePassword(password)) {
+      errors.password = 'Password must be at least 8 characters long, and include uppercase, lowercase, number, and special character';
+    }
+
     if (password !== confirmPassword) errors.confirmPassword = 'Passwords do not match';
+
     if (!phoneNumber) errors.phoneNumber = 'Phone number is required';
+    else if (!validatePhoneNumber(phoneNumber)) errors.phoneNumber = 'Invalid phone number format';
+
     if (!address) errors.address = 'Address is required';
     if (!dateOfBirth) errors.dateOfBirth = 'Date of birth is required';
     if (!gender) errors.gender = 'Gender is required';
@@ -55,12 +79,12 @@ function SignUp() {
       await setDoc(userDocRef, {
         displayName: user.displayName,
         email: user.email,
-        phoneNumber: phoneNumber,
-        address: address,
-        dateOfBirth: dateOfBirth,
-        gender: gender,
-        securityQuestion: securityQuestion,
-        securityAnswer: securityAnswer,
+        phoneNumber,
+        address,
+        dateOfBirth,
+        gender,
+        securityQuestion,
+        securityAnswer,
         photoURL: user.photoURL,
         paymentMethods: [],
       });

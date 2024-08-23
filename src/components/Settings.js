@@ -16,6 +16,8 @@ import {
 import { MdOutlineDarkMode, MdOutlineLightMode } from 'react-icons/md';
 import { FaLanguage } from 'react-icons/fa';
 import Modal from 'react-modal';
+import { auth } from '../firebase'; // Firebase auth import
+import { deleteUser } from 'firebase/auth';
 
 Modal.setAppElement('#root');
 
@@ -24,21 +26,50 @@ function Settings() {
   const [darkMode, setDarkMode] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [textSize, setTextSize] = useState('text-base');
+  const [notifications, setNotifications] = useState({
+    email: false,
+    sms: false,
+    push: false,
+  });
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
 
-  const confirmDeletion = () => {
+  const confirmDeletion = async () => {
     setShowConfirmation(false);
-    alert('Account deleted');
+    try {
+      await deleteUser(auth.currentUser);
+      alert('Account deleted');
+      navigate('/signup'); // Navigate to signup after deletion
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('Failed to delete account');
+    }
   };
 
   const handleTextSizeChange = (size) => {
     setTextSize(size);
     document.documentElement.classList.remove('text-sm', 'text-base', 'text-lg');
     document.documentElement.classList.add(size);
+  };
+
+  const handleNotificationChange = (type) => {
+    setNotifications((prevNotifications) => ({
+      ...prevNotifications,
+      [type]: !prevNotifications[type],
+    }));
+  };
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      alert('Failed to log out');
+    }
   };
 
   return (
@@ -54,7 +85,10 @@ function Settings() {
         <section className="bg-gray-100 rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold mb-4">Security Preferences</h2>
           <div className="space-y-4">
-            <button className="w-full flex items-center justify-between p-4 bg-gray-200 rounded-md hover:bg-gray-300 transition duration-150">
+            <button
+              className="w-full flex items-center justify-between p-4 bg-gray-200 rounded-md hover:bg-gray-300 transition duration-150"
+              onClick={() => alert('Two-Factor Authentication feature coming soon!')}
+            >
               <span>Two-Factor Authentication</span>
               <AiOutlineSafetyCertificate className="text-xl" />
             </button>
@@ -72,17 +106,32 @@ function Settings() {
           <div className="space-y-4">
             <div className="w-full flex items-center justify-between p-4 bg-gray-200 rounded-md hover:bg-gray-300 transition duration-150">
               <span>Email Notifications</span>
-              <input type="checkbox" className="form-checkbox" />
+              <input
+                type="checkbox"
+                checked={notifications.email}
+                onChange={() => handleNotificationChange('email')}
+                className="form-checkbox"
+              />
               <AiOutlineMail className="text-xl" />
             </div>
             <div className="w-full flex items-center justify-between p-4 bg-gray-200 rounded-md hover:bg-gray-300 transition duration-150">
               <span>SMS Notifications</span>
-              <input type="checkbox" className="form-checkbox" />
+              <input
+                type="checkbox"
+                checked={notifications.sms}
+                onChange={() => handleNotificationChange('sms')}
+                className="form-checkbox"
+              />
               <AiOutlinePhone className="text-xl" />
             </div>
             <div className="w-full flex items-center justify-between p-4 bg-gray-200 rounded-md hover:bg-gray-300 transition duration-150">
               <span>Push Notifications</span>
-              <input type="checkbox" className="form-checkbox" />
+              <input
+                type="checkbox"
+                checked={notifications.push}
+                onChange={() => handleNotificationChange('push')}
+                className="form-checkbox"
+              />
               <AiOutlineBell className="text-xl" />
             </div>
           </div>
@@ -178,7 +227,7 @@ function Settings() {
           <div className="space-y-4">
             <button
               className="w-full flex items-center justify-between p-4 bg-gray-200 rounded-md hover:bg-gray-300 transition duration-150"
-              onClick={() => navigate('/login')}
+              onClick={handleLogout}
             >
               <span>Logout</span>
               <AiOutlineLogout className="text-xl" />
@@ -186,28 +235,28 @@ function Settings() {
           </div>
         </section>
       </main>
-      {showConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-lg font-bold mb-4">Confirm Account Deletion</h2>
-            <p className="mb-4">Are you sure you want to delete your account? This action cannot be undone.</p>
-            <div className="flex justify-end space-x-4">
-              <button
-                className="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded-md hover:bg-gray-400 dark:hover:bg-gray-600 transition duration-150"
-                onClick={() => setShowConfirmation(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition duration-150"
-                onClick={confirmDeletion}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+{showConfirmation && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className={`p-6 rounded-lg shadow-lg ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
+      <h2 className="text-lg font-bold mb-4">Confirm Account Deletion</h2>
+      <p className="mb-4">Are you sure you want to delete your account? This action cannot be undone.</p>
+      <div className="flex justify-end space-x-4">
+        <button
+          className={`px-4 py-2 rounded-md transition duration-150 ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-300 hover:bg-gray-400 text-gray-900'}`}
+          onClick={() => setShowConfirmation(false)}
+        >
+          Cancel
+        </button>
+        <button
+          className={`px-4 py-2 rounded-md transition duration-150 ${darkMode ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}
+          onClick={confirmDeletion}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       <Footer />
     </div>
   );

@@ -1,28 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'animate.css';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 
 function Onboarding() {
   const navigate = useNavigate();
+  const [features, setFeatures] = useState([]);
 
-  const sections = [
-    {
-      img: 'claim.jpeg',
-      title: 'Track Insurance Claims',
-      description: 'Stay updated with real-time claim status.',
-    },
-    {
-      img: 'savprog.jpeg',
-      title: 'Manage Transactions',
-      description: 'Easily handle all your healthcare payments.',
-    },
-    {
-      img: 'medhist.jpeg',
-      title: 'Secure Data Sharing',
-      description: 'Share and manage your healthcare data securely.',
-    },
-  ];
+  useEffect(() => {
+    // Simulate an API call to fetch the features dynamically
+    const fetchFeatures = async () => {
+      try {
+        const response = await axios.get('/api/features'); // Assume an API endpoint exists
+        setFeatures(response.data);
+      } catch (error) {
+        console.error('Error fetching features:', error);
+        // Fallback to default features if API fails
+        setFeatures([
+          {
+            img: 'claim.jpeg',
+            title: 'Track Insurance Claims',
+            description: 'Stay updated with real-time claim status.',
+          },
+          {
+            img: 'savprog.jpeg',
+            title: 'Manage Transactions',
+            description: 'Easily handle all your healthcare payments.',
+          },
+          {
+            img: 'medhist.jpeg',
+            title: 'Secure Data Sharing',
+            description: 'Share and manage your healthcare data securely.',
+          },
+        ]);
+      }
+    };
+
+    fetchFeatures();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-200 via-purple-300 to-red-400 text-gray-900 overflow-hidden">
@@ -38,7 +54,7 @@ function Onboarding() {
         </motion.div>
 
         <section className="space-y-32 w-full">
-          {sections.map((feature, index) => (
+          {features.map((feature, index) => (
             <motion.div
               className="text-center animate__animated animate__fadeIn"
               key={index}

@@ -60,7 +60,7 @@ function SavingsProgress() {
             </button>
           </Tippy>
           <Tippy content="Achievements">
-            <button onClick={() => navigate('/achievements')} className="text-white">
+            <button onClick={() => navigate('/Achievements')} className="text-white">
               <AiOutlineTrophy className="h-6 w-6" />
             </button>
           </Tippy>

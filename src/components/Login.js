@@ -142,11 +142,14 @@ function Login() {
               </label>
             </div>
             <div className="text-sm">
-              <a href="/forgot-password" className="font-medium text-indigo-300 hover:text-indigo-100 transition-colors duration-300">
+              <span
+                onClick={() => navigate('/forgot-password')}
+                className="font-medium text-indigo-300 hover:text-indigo-100 transition-colors duration-300 cursor-pointer"
+              >
                 Forgot your password?
-              </a>
+              </span>
+            </div>       
             </div>
-          </div>
           <div>
             <button
               type="submit"

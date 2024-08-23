@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import WelcomeScreen from './components/WelcomeScreen';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
@@ -26,6 +26,7 @@ import { fetchUserData } from './components/authService';
 import NearbyHospitals from './components/NearbyHospitals';
 import NearbyInsurance from './components/NearbyInsurance';
 import FAQ from './components/FAQ';
+import Achievements from './components/Achievements';
 import CustomerService from './components/CustomerService';
 import Appointments from './components/Appointments';
 import { loadStripe } from '@stripe/stripe-js';
@@ -37,6 +38,11 @@ function App() {
   const [firstTimeUser, setFirstTimeUser] = useState(false);
   const [loading, setLoading] = useState(true);
   const stripePromise = loadStripe('pk_test_51PoVmkL3UFtopiib4YEA88EELjcOL6J6YPXzMIlbkohGGZLt3TRqvLrTPVW7VA73plaxiM5LNMn1UpOk0p79pmYQ00npB0n2Sh');
+  const [claimsList, setClaimsList] = useState([]);
+
+  const handleNewClaim = (newClaim) => {
+    setClaimsList([...claimsList, newClaim]);
+  };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -78,9 +84,10 @@ function App() {
             <Route path="/search" element={<Search />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/medical-history" element={<MedicalHistory />} />
+            <Route path="/Achievements" element={<Achievements />} />
             <Route path="/nearby-hospitals" element={<NearbyHospitals />} />
-            <Route path="/make-claims" element={<MakeClaims />} />
-            <Route path="/add-new-claim" element={<AddNewClaim />} />
+            <Route path="/add-new-claim" element={<AddNewClaim onSubmitClaim={handleNewClaim} />} />
+            <Route path="/make-claims" element={<MakeClaims claims={claimsList} />} />
             <Route path="/make-payments" element={<MakePayments />} />
             <Route path="/financial" element={<Financial />} />
             <Route path="/savings-progress" element={<SavingsProgress />} />
